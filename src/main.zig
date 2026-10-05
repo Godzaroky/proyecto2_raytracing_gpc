@@ -3,13 +3,15 @@ const builtin = @import("builtin");
 const rl = @import("raylib");
 
 const color = @import("color.zig");
+const materials = @import("materials.zig");
 const Vec3 = @import("vec3.zig").Vec3;
-const Material = @import("material.zig").Material;
 const Light = @import("light.zig").Light;
 const Shape = @import("shapes/shape.zig").Shape;
+const Cube = @import("shapes/cube.zig").Cube;
 const Scene = @import("scene.zig").Scene;
 const Camera = @import("camera.zig").Camera;
 const Canvas = @import("canvas.zig").Canvas;
+const TextureSet = @import("texture.zig").TextureSet;
 const renderer = @import("renderer.zig");
 
 const window_width = 1280;
@@ -19,52 +21,20 @@ const window_height = 720;
 const render_scale = 1;
 
 // Escena de prueba
-const ground = Material{
-    .color = color.fromHex("#8a9a5b"),
-    .albedo = 0.9,
-    .specular = 0.05,
-    .shininess = 8,
-};
-
-const red_plastic = Material{
-    .color = color.fromHex("#c0392b"),
-    .albedo = 0.85,
-    .specular = 0.5,
-    .shininess = 64,
-};
-
-const sandstone = Material{
-    .color = color.fromHex("#d8c39a"),
-    .albedo = 0.9,
-    .specular = 0.1,
-    .shininess = 12,
-};
-
-const polished_marble = Material{
-    .color = color.fromHex("#eeeae0"),
-    .albedo = 0.7,
-    .specular = 0.8,
-    .shininess = 200,
-};
-
 const test_shapes = [_]Shape{
-    .{ .sphere = .{ .center = .init(0, -1000, 0), .radius = 1000, .material = &ground } },
-    .{ .sphere = .{ .center = .init(-2.5, 1, 0), .radius = 1, .material = &red_plastic } },
-    .{ .sphere = .{ .center = .init(0, 1.5, 1), .radius = 1.5, .material = &sandstone } },
-    .{ .sphere = .{ .center = .init(2.5, 0.8, -0.5), .radius = 0.8, .material = &polished_marble } },
+    .{ .cube = .init(.init(0, -0.5, 0), .init(24, 1, 24), &materials.grass) },
+    .{ .cube = .init(.init(0, 0.05, -1), .init(2, 0.1, 12), &materials.cobblestone) },
+    .{ .cube = .init(.init(0, 2, 5), .init(12, 4, 1.5), &materials.sandstone) },
+    .{ .cube = .init(.init(-3, 1, 0), .init(2, 2, 2), &materials.plaster) },
+    .{ .cube = .init(.init(-3, 2.25, 0), .init(2.2, 0.5, 2.2), &materials.roof_tiles) },
+    .{ .cube = .init(.init(3, 0.75, 1), .init(1.5, 1.5, 1.5), &materials.marble) },
+    .{ .cube = .init(.init(3, 0.02, -3), .init(4, 0.04, 2), &materials.water) },
+    .{ .cube = .init(.init(3, 0.15, -3), .init(1, 0.1, 2.4), &materials.wood) },
 };
 
 const test_lights = [_]Light{
     .{ .position = .init(-8, 10, -6), .color = color.fromHex("#ffe2b8"), .intensity = 1.0 },
     .{ .position = .init(10, 6, -4), .color = color.fromHex("#b8d4ff"), .intensity = 0.3 },
-};
-
-const test_scene = Scene{
-    .shapes = &test_shapes,
-    .lights = &test_lights,
-    .ambient = color.fromHex("#2a3040"),
-    .sky_top = color.fromHex("#4a7bc8"),
-    .sky_horizon = color.fromHex("#cfe3f5"),
 };
 
 pub fn main() !void {
@@ -78,6 +48,18 @@ pub fn main() !void {
     rl.initWindow(window_width, window_height, "Diorama - Raytracer");
     defer rl.closeWindow();
 
+    const textures = try TextureSet.load(gpa, "assets/textures");
+    defer textures.deinit(gpa);
+
+    const scene = Scene{
+        .shapes = &test_shapes,
+        .lights = &test_lights,
+        .textures = &textures,
+        .ambient = color.fromHex("#2a3040"),
+        .sky_top = color.fromHex("#4a7bc8"),
+        .sky_horizon = color.fromHex("#cfe3f5"),
+    };
+
     var canvas = try Canvas.init(gpa, window_width / render_scale, window_height / render_scale);
     defer canvas.deinit(gpa);
 
@@ -85,10 +67,10 @@ pub fn main() !void {
     const threads = try gpa.alloc(std.Thread, @max(1, thread_count));
     defer gpa.free(threads);
 
-    const camera = Camera.lookAt(.init(0, 3, -9), .init(0, 1, 0), std.math.pi / 3.0);
+    const camera = Camera.lookAt(.init(-2, 5, -11), .init(0, 1, 1), std.math.pi / 3.0);
 
     while (!rl.windowShouldClose()) {
-        try renderer.render(&test_scene, camera, &canvas, threads);
+        try renderer.render(&scene, camera, &canvas, threads);
         canvas.upload();
 
         if (rl.isKeyPressed(.p)) {

@@ -14,5 +14,7 @@ pub const Hit = struct {
     distance: f32,
     point: Vec3,
     normal: Vec3,
+    u: f32,
+    v: f32,
     material: *const Material,
 };

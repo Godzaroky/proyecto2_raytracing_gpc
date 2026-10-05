@@ -89,7 +89,7 @@ fn shade(scene: *const Scene, ray: Ray, hit: Hit) Vec3 {
     const mat = hit.material;
     const view_dir = ray.direction.negate();
     const normal = if (hit.normal.dot(view_dir) < 0) hit.normal.negate() else hit.normal;
-    const base_color = mat.color;
+    const base_color = surfaceColor(scene, hit);
 
     var result = scene.ambient.mul(base_color).scale(mat.albedo);
 
@@ -119,6 +119,12 @@ fn shade(scene: *const Scene, ray: Ray, hit: Hit) Vec3 {
     }
 
     return result;
+}
+
+fn surfaceColor(scene: *const Scene, hit: Hit) Vec3 {
+    const mat = hit.material;
+    const texture_id = mat.texture orelse return mat.color;
+    return scene.textures.get(texture_id).sample(hit.u, hit.v).mul(mat.color);
 }
 
 // incident apunta hacia la superficie
