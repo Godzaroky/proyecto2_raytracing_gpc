@@ -32,3 +32,22 @@ pub const Camera = struct {
             .normalize();
     }
 };
+
+// camara orbital
+pub const OrbitCamera = struct {
+    target: Vec3,
+    yaw: f32,
+    pitch: f32,
+    distance: f32,
+    auto_rotate: bool = false,
+
+    pub fn toCamera(self: OrbitCamera) Camera {
+        var position: Vec3 = undefined;
+        position.x = self.target.x + self.distance * @cos(self.pitch) * @sin(self.yaw);
+        position.y = self.target.y + self.distance * @sin(self.pitch);
+        position.z = self.target.z + self.distance * @cos(self.pitch) * @cos(self.yaw);
+
+        const camera = Camera.lookAt(position, self.target, 90.0 * std.math.pi / 180.0);
+        return camera;
+    }
+};

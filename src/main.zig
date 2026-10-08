@@ -10,9 +10,11 @@ const Shape = @import("shapes/shape.zig").Shape;
 const Cube = @import("shapes/cube.zig").Cube;
 const Scene = @import("scene.zig").Scene;
 const Camera = @import("camera.zig").Camera;
+const OrbitCamera = @import("camera.zig").OrbitCamera;
 const Canvas = @import("canvas.zig").Canvas;
 const TextureSet = @import("texture.zig").TextureSet;
 const renderer = @import("renderer.zig");
+const handleInput = @import("input.zig").handleInput;
 
 const window_width = 1280;
 const window_height = 720;
@@ -67,9 +69,22 @@ pub fn main() !void {
     const threads = try gpa.alloc(std.Thread, @max(1, thread_count));
     defer gpa.free(threads);
 
-    const camera = Camera.lookAt(.init(-2, 5, -11), .init(0, 1, 1), std.math.pi / 3.0);
+    var orbit = OrbitCamera{
+        .target = .init(0, 1, 1),
+        .yaw = std.math.pi,
+        .pitch = std.math.degreesToRadians(35.0),
+        .distance = 12,
+    };
 
     while (!rl.windowShouldClose()) {
+        const dt = @min(rl.getFrameTime(), 0.1);
+        const moved = handleInput(&orbit, dt);
+        const camera = orbit.toCamera();
+
+        if (moved) {
+            std.debug.print("yaw={d:.2} pitch={d:.2} distance={d:.2}\n", .{ orbit.yaw, orbit.pitch, orbit.distance });
+        }
+
         try renderer.render(&scene, camera, &canvas, threads);
         canvas.upload();
 
