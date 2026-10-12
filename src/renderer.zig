@@ -134,6 +134,6 @@ pub fn reflect(incident: Vec3, normal: Vec3) Vec3 {
 
 // Fondo provisional hasta tener skybox
 fn background(scene: *const Scene, direction: Vec3) Vec3 {
-    const t = @max(0, direction.y);
-    return scene.sky_horizon.lerp(scene.sky_top, t);
+    const skybox = scene.skybox;
+    return skybox.sample(direction);
 }

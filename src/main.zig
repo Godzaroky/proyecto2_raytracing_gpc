@@ -15,6 +15,7 @@ const Canvas = @import("canvas.zig").Canvas;
 const TextureSet = @import("texture.zig").TextureSet;
 const renderer = @import("renderer.zig");
 const handleInput = @import("input.zig").handleInput;
+const Skybox = @import("skybox.zig").Skybox;
 
 const window_width = 1280;
 const window_height = 720;
@@ -54,6 +55,9 @@ pub fn main() !void {
     const textures = try TextureSet.load(gpa, "assets/textures");
     defer textures.deinit(gpa);
 
+    const skybox = try Skybox.load(gpa, "assets/skybox/sky.png");
+    defer skybox.deinit(gpa);
+
     const scene = Scene{
         .shapes = &test_shapes,
         .lights = &test_lights,
@@ -61,6 +65,7 @@ pub fn main() !void {
         .ambient = color.fromHex("#2a3040"),
         .sky_top = color.fromHex("#4a7bc8"),
         .sky_horizon = color.fromHex("#cfe3f5"),
+        .skybox = &skybox,
     };
 
     var preview_canvas = try Canvas.init(gpa, window_width / preview_scale, window_height / preview_scale);
