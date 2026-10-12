@@ -9,7 +9,5 @@ pub const Scene = struct {
     lights: []const Light,
     textures: *const TextureSet,
     ambient: Vec3,
-    sky_top: Vec3,
-    sky_horizon: Vec3,
     skybox: *const Skybox,
 };

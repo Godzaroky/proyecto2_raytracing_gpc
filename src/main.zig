@@ -63,8 +63,6 @@ pub fn main() !void {
         .lights = &test_lights,
         .textures = &textures,
         .ambient = color.fromHex("#2a3040"),
-        .sky_top = color.fromHex("#4a7bc8"),
-        .sky_horizon = color.fromHex("#cfe3f5"),
         .skybox = &skybox,
     };
 

@@ -132,7 +132,7 @@ pub fn reflect(incident: Vec3, normal: Vec3) Vec3 {
     return incident.sub(normal.scale(2 * incident.dot(normal)));
 }
 
-// Fondo provisional hasta tener skybox
+// Fondo con Skybox
 fn background(scene: *const Scene, direction: Vec3) Vec3 {
     const skybox = scene.skybox;
     return skybox.sample(direction);
