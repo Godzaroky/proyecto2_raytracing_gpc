@@ -19,8 +19,8 @@ const handleInput = @import("input.zig").handleInput;
 const window_width = 1280;
 const window_height = 720;
 
-// Resolucion interna = ventana / render_scale
-const render_scale = 1;
+// Resolucion interna = ventana / preview_scale
+const preview_scale = 3;
 
 // Escena de prueba
 const test_shapes = [_]Shape{
@@ -48,6 +48,7 @@ pub fn main() !void {
 
     rl.setTraceLogLevel(.warning);
     rl.initWindow(window_width, window_height, "Diorama - Raytracer");
+    rl.setTargetFPS(60);
     defer rl.closeWindow();
 
     const textures = try TextureSet.load(gpa, "assets/textures");
@@ -62,8 +63,14 @@ pub fn main() !void {
         .sky_horizon = color.fromHex("#cfe3f5"),
     };
 
-    var canvas = try Canvas.init(gpa, window_width / render_scale, window_height / render_scale);
-    defer canvas.deinit(gpa);
+    var preview_canvas = try Canvas.init(gpa, window_width / preview_scale, window_height / preview_scale);
+    defer preview_canvas.deinit(gpa);
+
+    var full_canvas = try Canvas.init(gpa, window_width, window_height);
+    defer full_canvas.deinit(gpa);
+
+    var active: *Canvas = &full_canvas;
+    var needs_full_render = true;
 
     const thread_count = std.Thread.getCpuCount() catch 1;
     const threads = try gpa.alloc(std.Thread, @max(1, thread_count));
@@ -82,19 +89,24 @@ pub fn main() !void {
         const camera = orbit.toCamera();
 
         if (moved) {
-            std.debug.print("yaw={d:.2} pitch={d:.2} distance={d:.2}\n", .{ orbit.yaw, orbit.pitch, orbit.distance });
+            try renderer.render(&scene, camera, &preview_canvas, threads);
+            preview_canvas.upload();
+            active = &preview_canvas;
+            needs_full_render = true;
+        } else if (needs_full_render) {
+            try renderer.render(&scene, camera, &full_canvas, threads);
+            full_canvas.upload();
+            active = &full_canvas;
+            needs_full_render = false;
         }
 
-        try renderer.render(&scene, camera, &canvas, threads);
-        canvas.upload();
-
         if (rl.isKeyPressed(.p)) {
-            _ = canvas.saveToFile("render.png");
+            _ = full_canvas.saveToFile("render.png");
         }
 
         rl.beginDrawing();
         defer rl.endDrawing();
-        canvas.draw(rl.getScreenWidth(), rl.getScreenHeight());
+        active.draw(rl.getScreenWidth(), rl.getScreenHeight());
         rl.drawFPS(10, 10);
     }
 }
