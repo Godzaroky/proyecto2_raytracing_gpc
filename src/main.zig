@@ -31,8 +31,10 @@ const test_shapes = [_]Shape{
     .{ .cube = .init(.init(-3, 1, 0), .init(2, 2, 2), &materials.plaster) },
     .{ .cube = .init(.init(-3, 2.25, 0), .init(2.2, 0.5, 2.2), &materials.roof_tiles) },
     .{ .cube = .init(.init(3, 0.75, 1), .init(1.5, 1.5, 1.5), &materials.marble) },
-    .{ .cube = .init(.init(3, 0.02, -3), .init(4, 0.04, 2), &materials.water) },
+    .{ .cube = .init(.init(3, -0.225, -3), .init(4, 0.55, 2), &materials.water) },
     .{ .cube = .init(.init(3, 0.15, -3), .init(1, 0.1, 2.4), &materials.wood) },
+    .{ .cube = .init(.init(2.3, -0.1, -3), .init(0.2, 0.5, 0.2), &materials.wood) },
+    .{ .cube = .init(.init(3.7, -0.1, -3), .init(0.2, 0.5, 0.2), &materials.wood) },
 };
 
 const test_lights = [_]Light{
