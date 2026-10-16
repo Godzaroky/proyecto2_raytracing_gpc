@@ -3,6 +3,7 @@ const Ray = @import("../ray.zig").Ray;
 const Hit = @import("../ray.zig").Hit;
 const Material = @import("../material.zig").Material;
 const Cube = @import("cube.zig").Cube;
+const Aabb = @import("../aabb.zig").Aabb;
 
 // Caja girada alrededor del eje y
 pub const RotatedCube = struct {
@@ -18,6 +19,14 @@ pub const RotatedCube = struct {
             .cos_a = @cos(angle),
             .sin_a = @sin(angle),
         };
+    }
+
+    pub fn bounds(self: RotatedCube) Aabb {
+        const half = self.local.max;
+        const c = @abs(self.cos_a);
+        const s = @abs(self.sin_a);
+        const extent = Vec3.init(half.x * c + half.z * s, half.y, half.x * s + half.z * c);
+        return .{ .min = self.center.sub(extent), .max = self.center.add(extent) };
     }
 
     pub fn intersect(self: RotatedCube, ray: Ray, t_min: f32, t_max: f32) ?Hit {

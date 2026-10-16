@@ -3,11 +3,17 @@ const Vec3 = @import("../vec3.zig").Vec3;
 const Ray = @import("../ray.zig").Ray;
 const Hit = @import("../ray.zig").Hit;
 const Material = @import("../material.zig").Material;
+const Aabb = @import("../aabb.zig").Aabb;
 
 pub const Sphere = struct {
     center: Vec3,
     radius: f32,
     material: *const Material,
+
+    pub fn bounds(self: Sphere) Aabb {
+        const r = Vec3.splat(self.radius);
+        return .{ .min = self.center.sub(r), .max = self.center.add(r) };
+    }
 
     pub fn intersect(self: Sphere, ray: Ray, t_min: f32, t_max: f32) ?Hit {
         const oc = ray.origin.sub(self.center);

@@ -4,6 +4,7 @@ const rl = @import("raylib");
 
 const color = @import("color.zig");
 const diorama = @import("diorama.zig");
+const Bvh = @import("bvh.zig").Bvh;
 const Scene = @import("scene.zig").Scene;
 const OrbitCamera = @import("camera.zig").OrbitCamera;
 const Canvas = @import("canvas.zig").Canvas;
@@ -17,6 +18,9 @@ const window_height = 720;
 
 // Resolucion interna = ventana / preview_scale
 const preview_scale = 3;
+
+// Grabacion: una vuelta completa, 10 s a 30 fps
+const recording_frames = 300;
 
 pub fn main() !void {
     var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
@@ -39,8 +43,11 @@ pub fn main() !void {
     const shapes = try diorama.build(gpa);
     defer gpa.free(shapes);
 
+    const bvh = try Bvh.build(gpa, shapes);
+    defer bvh.deinit(gpa);
+
     const scene = Scene{
-        .shapes = shapes,
+        .bvh = &bvh,
         .lights = &diorama.lights,
         .textures = &textures,
         .ambient = color.fromHex("#2a3040"),
@@ -67,21 +74,45 @@ pub fn main() !void {
         .distance = 18,
     };
 
-    while (!rl.windowShouldClose()) {
-        const dt = @min(rl.getFrameTime(), 0.1);
-        const moved = handleInput(&orbit, dt);
-        const camera = orbit.toCamera();
+    var recording = false;
+    var recorded: u32 = 0;
 
-        if (moved) {
-            try renderer.render(&scene, camera, &preview_canvas, threads);
-            preview_canvas.upload();
-            active = &preview_canvas;
-            needs_full_render = true;
-        } else if (needs_full_render) {
-            try renderer.render(&scene, camera, &full_canvas, threads);
+    while (!rl.windowShouldClose()) {
+        if (rl.isKeyPressed(.v)) {
+            recording = !recording;
+            recorded = 0;
+            if (recording) _ = rl.makeDirectory("frames");
+        }
+
+        if (recording) {
+            orbit.yaw += 2 * std.math.pi / @as(f32, recording_frames);
+            try renderer.render(&scene, orbit.toCamera(), &full_canvas, threads);
             full_canvas.upload();
             active = &full_canvas;
             needs_full_render = false;
+
+            var path_buffer: [64]u8 = undefined;
+            const path = try std.fmt.bufPrintZ(&path_buffer, "frames/frame_{d:0>4}.png", .{recorded});
+            _ = full_canvas.saveToFile(path);
+
+            recorded += 1;
+            if (recorded == recording_frames) recording = false;
+        } else {
+            const dt = @min(rl.getFrameTime(), 0.1);
+            const moved = handleInput(&orbit, dt);
+            const camera = orbit.toCamera();
+
+            if (moved) {
+                try renderer.render(&scene, camera, &preview_canvas, threads);
+                preview_canvas.upload();
+                active = &preview_canvas;
+                needs_full_render = true;
+            } else if (needs_full_render) {
+                try renderer.render(&scene, camera, &full_canvas, threads);
+                full_canvas.upload();
+                active = &full_canvas;
+                needs_full_render = false;
+            }
         }
 
         if (rl.isKeyPressed(.p)) {
@@ -92,5 +123,11 @@ pub fn main() !void {
         defer rl.endDrawing();
         active.draw(rl.getScreenWidth(), rl.getScreenHeight());
         rl.drawFPS(10, 10);
+
+        if (recording) {
+            var text_buffer: [64]u8 = undefined;
+            const text = try std.fmt.bufPrintZ(&text_buffer, "Recording {d}/{d}", .{ recorded, recording_frames });
+            rl.drawText(text, 10, 40, 20, .red);
+        }
     }
 }

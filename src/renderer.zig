@@ -119,25 +119,11 @@ pub fn castRay(scene: *const Scene, ray: Ray, depth: u32) Vec3 {
 }
 
 fn closestHit(scene: *const Scene, ray: Ray, t_min: f32, t_max: f32) ?Hit {
-    var closest: ?Hit = null;
-    var nearest = t_max;
-    for (scene.shapes) |*shape| {
-        if (shape.intersect(ray, t_min, nearest)) |hit| {
-            nearest = hit.distance;
-            closest = hit;
-        }
-    }
-    return closest;
+    return scene.bvh.closestHit(ray, t_min, t_max);
 }
 
-// Los materiales transparentes no bloquean la luz
 fn isOccluded(scene: *const Scene, ray: Ray, t_max: f32) bool {
-    for (scene.shapes) |*shape| {
-        const hit = shape.intersect(ray, surface_bias, t_max) orelse continue;
-        if (hit.material.transparency > 0) continue;
-        return true;
-    }
-    return false;
+    return scene.bvh.isOccluded(ray, surface_bias, t_max);
 }
 
 // Phong: ambiental + difusa + especular, con sombras

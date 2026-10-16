@@ -4,6 +4,7 @@ const Hit = @import("../ray.zig").Hit;
 const Material = @import("../material.zig").Material;
 const Face = @import("./face.zig").Face;
 const FaceKind = @import("./face.zig").FaceKind;
+const Aabb = @import("../aabb.zig").Aabb;
 
 pub const RidgeAxis = enum {
     x,
@@ -43,6 +44,10 @@ pub const Prism = struct {
             .bounds_min = .init(@min(a.x, b2.x), y0, @min(a.z, b2.z)),
             .bounds_max = .init(@max(a.x, b2.x), y1, @max(a.z, b2.z)),
         };
+    }
+
+    pub fn bounds(self: Prism) Aabb {
+        return .{ .min = self.bounds_min, .max = self.bounds_max };
     }
 
     pub fn intersect(self: Prism, ray: Ray, t_min: f32, t_max: f32) ?Hit {

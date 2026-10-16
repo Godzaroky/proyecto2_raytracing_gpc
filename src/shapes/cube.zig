@@ -2,6 +2,7 @@ const Vec3 = @import("../vec3.zig").Vec3;
 const Ray = @import("../ray.zig").Ray;
 const Hit = @import("../ray.zig").Hit;
 const Material = @import("../material.zig").Material;
+const Aabb = @import("../aabb.zig").Aabb;
 
 pub const Cube = struct {
     min: Vec3,
@@ -15,6 +16,10 @@ pub const Cube = struct {
             .max = center.add(half),
             .material = material,
         };
+    }
+
+    pub fn bounds(self: Cube) Aabb {
+        return .{ .min = self.min, .max = self.max };
     }
 
     // Metodo de slabs
