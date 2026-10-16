@@ -62,3 +62,11 @@ pub const wood = Material{
     .specular = 0.1,
     .shininess = 10,
 };
+
+pub const leaves = Material{
+    .texture = .grass,
+    .color = .init(0.6, 0.8, 0.55),
+    .albedo = 0.85,
+    .specular = 0.05,
+    .shininess = 6,
+};
